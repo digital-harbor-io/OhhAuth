@@ -63,7 +63,7 @@ open class OhhAuth
         var oAuthParameters = oAuthDefaultParameters(consumerKey: cc.key, userKey: uc?.key).merging(addOAuthParms, uniquingKeysWith: { $1 })
         
         /// [RFC-5849 Section 3.4.1.3.1](https://tools.ietf.org/html/rfc5849#section-3.4.1.3.1)
-        let signString: String = [oAuthParameters, addOAuthParms, formParameter, url.queryParameters()]
+        let signString: String = [oAuthParameters, formParameter, url.queryParameters()]
             .flatMap { $0.map(tuplify) }
             .sorted(by: cmp)
             .map(toPairString)
