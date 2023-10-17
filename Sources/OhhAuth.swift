@@ -41,7 +41,7 @@ open class OhhAuth
     ///   - userCredentials: user credentials (nil if this is a request without user association)
     ///
     /// - Returns: OAuth HTTP header entry for the Authorization field.
-    public static func calculateSignature(url: URL, method: String, parameter: [String: String],
+    public static func calculateSignature(url: URL, method: String, formParameter: [String: String], addOAuthParms: [String: String],
         consumerCredentials cc: Credentials, userCredentials uc: Credentials?) -> String
     {
         typealias Tup = (key: String, value: String)
@@ -60,10 +60,10 @@ open class OhhAuth
         }
         
         /// [RFC-5849 Section 3.1](https://tools.ietf.org/html/rfc5849#section-3.1)
-        var oAuthParameters = oAuthDefaultParameters(consumerKey: cc.key, userKey: uc?.key)
+        var oAuthParameters = oAuthDefaultParameters(consumerKey: cc.key, userKey: uc?.key).merging(addOAuthParms, uniquingKeysWith: { $1 })
         
         /// [RFC-5849 Section 3.4.1.3.1](https://tools.ietf.org/html/rfc5849#section-3.4.1.3.1)
-        let signString: String = [oAuthParameters, parameter, url.queryParameters()]
+        let signString: String = [oAuthParameters, addOAuthParms, formParameter, url.queryParameters()]
             .flatMap { $0.map(tuplify) }
             .sorted(by: cmp)
             .map(toPairString)
@@ -91,7 +91,6 @@ open class OhhAuth
             .map(toBrackyPairString)
             .joined(separator: ",")
     }
-    
 
     
     /// Function to perform the right percentage encoding for url form parameters.
@@ -154,7 +153,7 @@ public extension URLRequest
     ///   - paras: url-form parameters
     ///   - consumerCredentials: consumer credentials
     ///   - userCredentials: user credentials (nil if this is a request without user association)
-    mutating func oAuthSign(method: String, urlFormParameters paras: [String: String],
+    mutating func oAuthSign(method: String, urlFormParameters paras: [String: String], additionalOAuthParameters oauthParas: [String: String],
         consumerCredentials cc: OhhAuth.Credentials, userCredentials uc: OhhAuth.Credentials? = nil)
     {
         self.httpMethod = method.uppercased()
@@ -166,7 +165,7 @@ public extension URLRequest
         self.addValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         
         let sig = OhhAuth.calculateSignature(url: self.url!, method: self.httpMethod!,
-                      parameter: paras, consumerCredentials: cc, userCredentials: uc)
+                                             formParameter: paras, addOAuthParms: oauthParas, consumerCredentials: cc, userCredentials: uc)
         
         self.addValue(sig, forHTTPHeaderField: "Authorization")
     }
@@ -197,7 +196,7 @@ public extension URLRequest
         }
         
         let sig = OhhAuth.calculateSignature(url: self.url!, method: self.httpMethod!,
-                      parameter: [:], consumerCredentials: cc, userCredentials: uc)
+                                             formParameter: [:], addOAuthParms: [:], consumerCredentials: cc, userCredentials: uc)
         
         self.addValue(sig, forHTTPHeaderField: "Authorization")
     }
