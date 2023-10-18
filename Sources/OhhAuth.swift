@@ -128,7 +128,7 @@ open class OhhAuth
         var defaults: [String: String] = [
             "oauth_consumer_key":     consumerKey,
             "oauth_signature_method": "HMAC-SHA1",
-//            "oauth_version":          "1.0",
+            "oauth_version":          "1.0",
             /// [RFC-5849 Section 3.3](https://tools.ietf.org/html/rfc5849#section-3.3)
             "oauth_timestamp":        String(Int(Date().timeIntervalSince1970)),
             "oauth_nonce":            UUID().uuidString,
